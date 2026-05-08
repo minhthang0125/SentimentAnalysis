@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentimentAnalysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="page-shell">
+        <section class="hero-card">
+            <h1 class="hero-title">Phân tích cảm xúc bình luận từ URL hoặc do người dùng nhập</h1>
+            <p class="hero-copy">
+                Dan lien ket san pham, video, bai viet hoac nhap truc tiep cac binh luan.
+                He thong se lam sach du lieu, phan loai cam xuc va hien thi ket qua truc quan.
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <section class="input-grid" id="input-grid">
+                <form class="analyze-form panel-lite" method="post" action="{{ url_for('main.analyze') }}" id="analyze-form">
+                    <div class="section-head">
+                        <h2>Phan tich tu URL</h2>
+                        <p>Vui long nhap URL tu YouTube.</p>
+                    </div>
+                    <label for="url">Duong dan can thu thap binh luan</label>
+                    <div class="form-row">
+                        <input
+                            id="url"
+                            name="url"
+                            type="url"
+                            placeholder="Vui long nhap URL YouTube"
+                            required
+                        >
+                        <button type="submit" id="analyze-button">Phan tich URL</button>
+                    </div>
+                </form>
+
+                <form class="analyze-form panel-lite" method="post" action="{{ url_for('main.analyze_text') }}" id="manual-form">
+                    <div class="section-head">
+                        <h2>Phan tich binh luan tu nhap</h2>
+                        <p>Moi dong la mot binh luan. AI se phan tich ngay ma khong can crawl tu website.</p>
+                    </div>
+                    <label for="manual_comment">Nhap mot hoac nhieu binh luan</label>
+                    <textarea
+                        id="manual_comment"
+                        name="manual_comment"
+                        rows="8"
+                        placeholder="Phim nay hay qua&#10;Giao hang hoi cham nhung san pham on&#10;Khong dang tien"
+                        required
+                    ></textarea>
+                    <div class="form-actions">
+                        <button type="submit" id="manual-button">Phan tich binh luan</button>
+                    </div>
+                </form>
+            </section>
+
+            <div class="loading-panel hidden" id="loading-panel">
+                <div class="spinner"></div>
+                <div>
+                    <strong>Dang xu ly du lieu...</strong>
+                    <p>He thong dang thu thap binh luan, lam sach van ban va phan tich cam xuc bang AI.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const loadingPanel = document.getElementById("loading-panel");
+        const inputGrid = document.getElementById("input-grid");
+        const forms = [
+            { formId: "analyze-form", buttonId: "analyze-button", loadingText: "Dang phan tich URL..." },
+            { formId: "manual-form", buttonId: "manual-button", loadingText: "Dang phan tich binh luan..." }
+        ];
+
+        function lockOtherForms(activeFormId, activeButtonId, loadingText) {
+            inputGrid.classList.add("busy");
+
+            forms.forEach(function (item) {
+                const form = document.getElementById(item.formId);
+                const controls = form.querySelectorAll("input, textarea, button");
+                const isActiveForm = item.formId === activeFormId;
+
+                controls.forEach(function (control) {
+                    if (isActiveForm) {
+                        if (control.id === activeButtonId) {
+                            control.disabled = true;
+                            control.textContent = loadingText;
+                        } else if (control.tagName === "INPUT" || control.tagName === "TEXTAREA") {
+                            control.readOnly = true;
+                        }
+                    } else {
+                        control.disabled = true;
+                    }
+                });
+            });
+        }
+
+        forms.forEach(function (item) {
+            const form = document.getElementById(item.formId);
+            form.addEventListener("submit", function () {
+                lockOtherForms(item.formId, item.buttonId, item.loadingText);
+                loadingPanel.classList.remove("hidden");
+            });
+        });
+    </script>
+</body>
+</html>
