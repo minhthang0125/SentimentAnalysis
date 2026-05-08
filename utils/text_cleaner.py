@@ -17,9 +17,7 @@ EMOJI_PATTERN = re.compile(
     flags=re.UNICODE,
 )
 
-SUPPORTED_PLATFORMS = {
-    "youtube": ("youtube.com", "youtu.be"),
-}
+YOUTUBE_DOMAINS = ("youtube.com", "youtu.be")
 
 
 def parse_url(value: str):
@@ -34,25 +32,12 @@ def is_valid_url(value: str) -> bool:
     return parsed is not None and parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
-def detect_supported_platform(value: str) -> str | None:
+def is_youtube_url(value: str) -> bool:
     if not is_valid_url(value):
-        return None
+        return False
 
-    hostname = (parse_url(value).netloc or "").lower()
-    if ":" in hostname:
-        hostname = hostname.split(":", 1)[0]
-
-    for platform_name, supported_domains in SUPPORTED_PLATFORMS.items():
-        if any(
-            hostname == supported_domain or hostname.endswith(f".{supported_domain}")
-            for supported_domain in supported_domains
-        ):
-            return platform_name
-    return None
-
-
-def is_supported_platform_url(value: str) -> bool:
-    return detect_supported_platform(value) is not None
+    hostname = (parse_url(value).netloc or "").lower().split(":", 1)[0]
+    return any(hostname == domain or hostname.endswith(f".{domain}") for domain in YOUTUBE_DOMAINS)
 
 
 def clean_comment(text: str, remove_emojis: bool = True) -> str:
